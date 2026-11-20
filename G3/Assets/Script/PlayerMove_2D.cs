@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class PlayerMove_2D : MonoBehaviour
 {
     [Header("移動系")]
+    [SerializeField] bool MoveOn = true;
     [SerializeField] float SpeedBuf = 0.05f;
     [SerializeField] float SpeedMax = 5f;
     [SerializeField] float Speed;
@@ -17,14 +18,22 @@ public class PlayerMove_2D : MonoBehaviour
     [SerializeField] Color BoostColor;
     [SerializeField] Color DamageColor;
     [Header("ギミック用")]
+    [SerializeField] bool JUMP = true;
+    [SerializeField] int jump_move = 0;
+    [SerializeField] int jump_count = 0;
+    [SerializeField] float jump_y = 0;
     [SerializeField] int hp = 0;
     [SerializeField] int hpmax = 100;
+    [SerializeField] int damage = 40;
     [SerializeField] float Boost = 0f;
     [SerializeField] int Boost_Max = 1200;
     [SerializeField] int Boost_Cost = 240;
     [SerializeField] int Boost_Gage = 0;
     [SerializeField] Vector2 RespawnPos_First;
     [SerializeField] Vector2 RespawnPos;
+    [SerializeField] int RespawnCount = 0;
+    [SerializeField] int RespawnCT = 120;
+    [SerializeField] bool RespawnGravity = false;
     [SerializeField] bool GRAVITY_CTR;
     [Header("UI")]
     [SerializeField] bool UION;
@@ -50,7 +59,7 @@ public class PlayerMove_2D : MonoBehaviour
 
     void Update()
     {
-        Move();//移動系まとめ
+        if(MoveOn)Move();//移動系まとめ
 
         if (Boost_Gage < Boost_Max)
             Boost_Gage++;
@@ -62,28 +71,16 @@ public class PlayerMove_2D : MonoBehaviour
             BoostGage.value = (float)Boost_Gage/Boost_Max;
         }
 
-
-        //色を元に戻す
-        if (MachineColor.g != 1f)
+        if (hp <= 0 && MoveOn)
         {
-            MachineColor.g += 0.02f;
-            if (MachineColor.g > 1f)
-                MachineColor.g = 1f;
+            hp = 0;
+            MachineColor = new Color(0.5f, 0.5f, 0.5f);
+            MoveOn = false;
         }
-        if (MachineColor.r != 1f)
-        {
-            MachineColor.r += 0.02f;
-            if (MachineColor.r > 1f)
-                MachineColor.r = 1f;
-        }
-        if (MachineColor.b != 1f)
-        {
-            MachineColor.b += 0.02f;
-            if (MachineColor.b > 1f)
-                MachineColor.b = 1f;
-        }
-        MachineRenderer.color = MachineColor;
-        //----色----
+        if (MoveOn == false)
+            RespawnCount++;
+        if (RespawnCount == RespawnCT)
+            Respawn();
 
         if (Input.GetKeyDown(KeyCode.R))
             Respawn();
@@ -123,7 +120,7 @@ public class PlayerMove_2D : MonoBehaviour
             }
         }
         // Rigidbody2Dで移動
-        MachineRb.linearVelocity = new Vector2(Speed + Boost, 0);
+        MachineRb.linearVelocity = new Vector2(Speed + Boost, jump_y);
         //----移動系----
 
         if (Boost != 0)
@@ -133,7 +130,7 @@ public class PlayerMove_2D : MonoBehaviour
                 Boost = 0;
         }
 
-        //重力反転
+        //手動ブースト
         if (Input.GetKeyDown(KeyCode.Q) && Boost_Gage >= Boost_Cost)
         {
             BOOST();
@@ -141,23 +138,81 @@ public class PlayerMove_2D : MonoBehaviour
             if (Boost_Gage < 0)
                 Boost_Gage = 0;
         }
-        //----重力----
-        //重力反転
-        if (Input.GetKeyDown(KeyCode.LeftShift)&&GRAVITY_CTR)
+        //----ブースト----
+
+        //重力反転・ジャンプ
+        if (Input.GetKeyDown(KeyCode.LeftShift))
         {
-            GRAVITY();
+            if (GRAVITY_CTR)
+            {
+                GRAVITY();
+            }
+            else if(JUMP)
+            {
+                MachineColor = BoostColor;
+                jump_move = 1;
+                jump_y = 0.04f;
+            }
+        }
+
+        if (jump_move == 1)
+        {
+            jump_count++;
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                jump_y += 0.01f;
+            }
+            if(Input.GetKeyUp(KeyCode.RightShift)||jump_count == 90)
+            {
+                jump_count = 0;
+                jump_move = 2;
+            }
+        }
+        if (jump_move == 2 && jump_y > 0)
+        {
+            jump_y -= 0.02f;
+            if (jump_y < 0)
+            {
+                jump_y = 0;
+            }
         }
         //----重力----
+
+        //色を元に戻す
+        if (MachineColor.g != 1f)
+        {
+            MachineColor.g += 0.02f;
+            if (MachineColor.g > 1f)
+                MachineColor.g = 1f;
+        }
+        if (MachineColor.r != 1f)
+        {
+            MachineColor.r += 0.02f;
+            if (MachineColor.r > 1f)
+                MachineColor.r = 1f;
+        }
+        if (MachineColor.b != 1f)
+        {
+            MachineColor.b += 0.02f;
+            if (MachineColor.b > 1f)
+                MachineColor.b = 1f;
+        }
+        MachineRenderer.color = MachineColor;
+        //----色----
     }
 
     private void Respawn()//リスポーン
     {
-        MachinePos.position = new Vector3(RespawnPos.x, RespawnPos.y, 0);
+        MoveOn = true;
+        RespawnCount = 0;
+        MachinePos.position = new Vector3(RespawnPos.x, RespawnPos_First.y, 0);
         MachinePos.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+        RespawnGravity = false;
         if (MachineRb.gravityScale < 0)
             MachineRb.gravityScale = -MachineRb.gravityScale;
         Speed = 0f;
         Boost = 0f;
+        hp = hpmax;
         MachineColor = Color.green;
     }
     
@@ -165,6 +220,7 @@ public class PlayerMove_2D : MonoBehaviour
     {
         Debug.Log("重力反転！");
         MachineColor = GravityColor;
+        JUMP = false;
         MachinePos.localScale =
             new Vector3(MachinePos.localScale.x,
             -MachinePos.localScale.y, MachinePos.localScale.z);
@@ -180,6 +236,8 @@ public class PlayerMove_2D : MonoBehaviour
 
     private void Reset()//リセット
     {
+        MoveOn = true;
+        RespawnCount = 0;
         MachinePos.position = new Vector3(RespawnPos_First.x, RespawnPos_First.y, 0);
         RespawnPos = new Vector2(MachinePos.position.x, MachinePos.position.y);
         MachinePos.localScale = new Vector3(0.3f, 0.3f, 0.3f);
@@ -195,10 +253,17 @@ public class PlayerMove_2D : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.CompareTag("Wall"))
+        if (JUMP == false)
+        {
+            JUMP = true;
+            jump_move = 0;
+            jump_count = 0;
+        }
+        if(other.gameObject.CompareTag("Wall"))
         {
             Debug.Log("障害物激突");
             MachineColor = BoostColor;
+            hp -= damage;
             Speed -= SpeedMax * 0.5f;
             if (other.gameObject.layer == 3)
                 Destroy(other.gameObject);
@@ -222,6 +287,12 @@ public class PlayerMove_2D : MonoBehaviour
         else if (other.CompareTag("GravityGate"))
         {
             Debug.Log("重力操作切替");
+            float a = 0;
+            if (Speed + Boost > 0)
+                a = 5.4f;
+            else
+                a = -5.4f;
+            MachinePos.position += new Vector3(a, 0, 0);
             GRAVITY_CTR = !GRAVITY_CTR;
             MachineColor = new Color(1, 1, 0, 1);
         }
@@ -231,6 +302,13 @@ public class PlayerMove_2D : MonoBehaviour
             Debug.Log("チェックポイント！");
             RespawnPos.x = MachinePos.position.x;
             MachineColor = Color.green;
+            RespawnGravity = GRAVITY_CTR;
+        }
+        // 触れた相手のタグが "Player" だった場合
+        else if (other.CompareTag("Death"))
+        {
+            Debug.Log("死");
+            hp = 0;
         }
     }
 }
