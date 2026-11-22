@@ -9,6 +9,10 @@ public class PlayerMove_2D : MonoBehaviour
     [SerializeField] float SpeedBuf = 0.05f;
     [SerializeField] float SpeedMax = 5f;
     [SerializeField] float Speed;
+    [SerializeField] float Boost = 0f;
+    [SerializeField] int Boost_Max = 1200;
+    [SerializeField] int Boost_Cost = 240;
+    [SerializeField] int Boost_Gage = 0;
     [SerializeField] Transform MachinePos;
     [SerializeField] Rigidbody2D MachineRb;
     [Header("エフェクト(色系)")]
@@ -17,23 +21,23 @@ public class PlayerMove_2D : MonoBehaviour
     [SerializeField] Color GravityColor;
     [SerializeField] Color BoostColor;
     [SerializeField] Color DamageColor;
-    [Header("ギミック用")]
+    [Header("ジャンプ用")]
     [SerializeField] bool JUMP = true;
     [SerializeField] int jump_move = 0;
     [SerializeField] int jump_count = 0;
     [SerializeField] float jump_y = 0;
+    [Header("HP・ダメージ用")]
     [SerializeField] int hp = 0;
     [SerializeField] int hpmax = 100;
     [SerializeField] int damage = 40;
-    [SerializeField] float Boost = 0f;
-    [SerializeField] int Boost_Max = 1200;
-    [SerializeField] int Boost_Cost = 240;
-    [SerializeField] int Boost_Gage = 0;
+    [Header("リスポーン・リセット用")]
     [SerializeField] Vector2 RespawnPos_First;
     [SerializeField] Vector2 RespawnPos;
     [SerializeField] int RespawnCount = 0;
     [SerializeField] int RespawnCT = 120;
+    [Header("重力用")]
     [SerializeField] bool RespawnGravity = false;
+    [SerializeField] int Gravity_y = 1;
     [SerializeField] bool GRAVITY_CTR;
     [Header("UI")]
     [SerializeField] bool UION;
@@ -60,7 +64,11 @@ public class PlayerMove_2D : MonoBehaviour
 
     void Update()
     {
-        if(MoveOn)Move();//移動系まとめ
+        if (MachineRb.gravityScale < 0)
+            Gravity_y = -1;
+        else
+            Gravity_y = 1;
+        if (MoveOn) Move();//移動系まとめ
 
         if (Boost_Gage < Boost_Max)
             Boost_Gage++;
@@ -68,8 +76,8 @@ public class PlayerMove_2D : MonoBehaviour
         if (UION)
         {
             GravityUI.SetActive(GRAVITY_CTR);
-            HPGage.value = (float)hp/ hpmax;
-            BoostGage.value = (float)Boost_Gage/Boost_Max;
+            HPGage.value = (float)hp / hpmax;
+            BoostGage.value = (float)Boost_Gage / Boost_Max;
         }
 
         if (hp <= 0 && MoveOn)
@@ -136,12 +144,12 @@ public class PlayerMove_2D : MonoBehaviour
             }
         }
         // Rigidbody2Dで移動
-        MachineRb.linearVelocity = new Vector2(Speed + Boost, jump_y);
+        MachineRb.linearVelocity = new Vector2(Speed + Boost, jump_y * Gravity_y);
         //----移動系----
 
         if (Boost != 0)
         {
-            Boost -= SpeedBuf;
+            Boost -= SpeedBuf*2;
             if (Boost < 0)
                 Boost = 0;
         }
@@ -166,8 +174,13 @@ public class PlayerMove_2D : MonoBehaviour
             else if(JUMP)
             {
                 MachineColor = BoostColor;
+                //2段ジャンプ
+                if (jump_move != 0)
+                    JUMP = false;
+                //1段ジャンプ
+                //JUMP = false;
                 jump_move = 1;
-                jump_y = 0.04f;
+                jump_y = 7.5f;
             }
         }
 
@@ -176,17 +189,17 @@ public class PlayerMove_2D : MonoBehaviour
             jump_count++;
             if (Input.GetKey(KeyCode.LeftShift))
             {
-                jump_y += 0.01f;
+                jump_y += 0.4f;
             }
-            if(Input.GetKeyUp(KeyCode.RightShift)||jump_count == 90)
+            if(Input.GetKeyUp(KeyCode.RightShift)||jump_count == 15)
             {
                 jump_count = 0;
                 jump_move = 2;
             }
         }
-        if (jump_move == 2 && jump_y > 0)
+        if (jump_move !=1 && jump_y > 0)
         {
-            jump_y -= 0.02f;
+            jump_y -= 0.2f;
             if (jump_y < 0)
             {
                 jump_y = 0;
@@ -223,9 +236,18 @@ public class PlayerMove_2D : MonoBehaviour
         RespawnCount = 0;
         MachinePos.position = new Vector3(RespawnPos.x, RespawnPos_First.y, 0);
         MachinePos.localScale = new Vector3(0.3f, 0.3f, 0.3f);
-        RespawnGravity = false;
+        // Rigidbody2Dの速度をリセット
+        MachineRb.linearVelocity = Vector2.zero;
+        MachineRb.angularVelocity = 0f;
+        // ジャンプ関連の状態をリセット
+        jump_y = 0f;
+        jump_move = 0;
+        jump_count = 0;
+        JUMP = true;
+        GRAVITY_CTR = RespawnGravity;
         if (MachineRb.gravityScale < 0)
             MachineRb.gravityScale = -MachineRb.gravityScale;
+        Boost_Gage = Boost_Max;
         Speed = 0f;
         Boost = 0f;
         hp = hpmax;
@@ -248,24 +270,15 @@ public class PlayerMove_2D : MonoBehaviour
     {
         Debug.Log("ブースト！");
         MachineColor = BoostColor;
-        Boost = SpeedMax * 0.5f;
+        Boost = SpeedMax * 1f;
     }
 
     private void Reset()//リセット
     {
-        MoveOn = true;
-        RespawnCount = 0;
         MachinePos.position = new Vector3(RespawnPos_First.x, RespawnPos_First.y, 0);
         RespawnPos = new Vector2(MachinePos.position.x, MachinePos.position.y);
-        MachinePos.localScale = new Vector3(0.3f, 0.3f, 0.3f);
-        GRAVITY_CTR = false;
-        if (MachineRb.gravityScale < 0)
-            MachineRb.gravityScale = -MachineRb.gravityScale;
-        Speed = 0f;
-        Boost = 0f;
-        Boost_Gage = Boost_Max;
-        hp = hpmax;
-        MachineColor = Color.green;
+        RespawnGravity = false;
+        Respawn();
     }
 
     private void OnCollisionEnter2D(Collision2D other)
@@ -325,7 +338,7 @@ public class PlayerMove_2D : MonoBehaviour
         // 触れた相手のタグが "Player" だった場合
         else if (other.CompareTag("Death"))
         {
-            Debug.Log("死");
+            Debug.Log("ﾀﾋ");
             hp = 0;
         }
     }

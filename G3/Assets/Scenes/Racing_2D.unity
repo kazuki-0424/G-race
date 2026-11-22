@@ -894,6 +894,10 @@ MonoBehaviour:
   SpeedBuf: 0.2
   SpeedMax: 20
   Speed: 0
+  Boost: 0
+  Boost_Max: 1200
+  Boost_Cost: 240
+  Boost_Gage: 0
   MachinePos: {fileID: 235328216}
   MachineRb: {fileID: 235328213}
   MachineRenderer: {fileID: 235328215}
@@ -908,15 +912,12 @@ MonoBehaviour:
   hp: 0
   hpmax: 100
   damage: 40
-  Boost: 0
-  Boost_Max: 1200
-  Boost_Cost: 240
-  Boost_Gage: 0
   RespawnPos_First: {x: 0, y: 0}
   RespawnPos: {x: 0, y: 0}
   RespawnCount: 0
   RespawnCT: 120
   RespawnGravity: 0
+  Gravity_y: 1
   GRAVITY_CTR: 0
   UION: 1
   GravityUI: {fileID: 801687844}
@@ -2951,7 +2952,7 @@ AudioSource:
   m_audioClip: {fileID: 8300000, guid: 6c22257963286814cbf1d55016493001, type: 3}
   m_Resource: {fileID: 8300000, guid: 6c22257963286814cbf1d55016493001, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.5
+  m_Volume: 0.1
   m_Pitch: 1
   Loop: 1
   Mute: 0
