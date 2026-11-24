@@ -62,13 +62,17 @@ public class PlayerMove_2D : MonoBehaviour
         Reset();
     }
 
+    private void FixedUpdate()
+    {
+        if (MoveOn) Move();//移動系まとめ
+    }
+
     void Update()
     {
         if (MachineRb.gravityScale < 0)
             Gravity_y = -1;
         else
             Gravity_y = 1;
-        if (MoveOn) Move();//移動系まとめ
 
         if (Boost_Gage < Boost_Max)
             Boost_Gage++;
@@ -165,7 +169,7 @@ public class PlayerMove_2D : MonoBehaviour
         //----ブースト----
 
         //重力反転・ジャンプ
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             if (GRAVITY_CTR)
             {
