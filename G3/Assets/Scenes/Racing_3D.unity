@@ -730,8 +730,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9855bfdfd7fb11342a03d8a2e215ab05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speedBuf: 0.02
+  DriftSpeedDebuf: 0
   moveSpeed: 5
-  turnSpeed: 100
+  turnSpeed: 75
   boost: 1
   speed: 1
   maxspeed: 5
@@ -740,17 +742,9 @@ MonoBehaviour:
   normalGrip: 1
   driftTurnMultiplier: 1.5
   driftBoostPower: 1.2
-  rap: 1
-  rapmax: 0
-  goal: 0
-  checkpoint: 0
-  checkpointmax: 0
   InitTrans: {x: 0, y: 0.5, z: 0}
   HP: 100
   MaxHP: 100
-  GEAR: 1
-  gearboost: 1.2
-  gearenergy: 0
 --- !u!136 &1090572173
 CapsuleCollider:
   m_ObjectHideFlags: 0
