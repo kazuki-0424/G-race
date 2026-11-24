@@ -169,7 +169,7 @@ public class PlayerMove_2D : MonoBehaviour
         //----ブースト----
 
         //重力反転・ジャンプ
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             if (GRAVITY_CTR)
             {
