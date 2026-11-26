@@ -39,6 +39,9 @@ public class PlayerMove_2D : MonoBehaviour
     [SerializeField] bool RespawnGravity = false;
     [SerializeField] int Gravity_y = 1;
     [SerializeField] bool GRAVITY_CTR;
+    [Header("ゴール用")]
+    [SerializeField] bool isGoal = false;
+    [SerializeField] GameObject GoalUI;
     [Header("UI")]
     [SerializeField] bool UION;
     [SerializeField] GameObject GravityUI;
@@ -64,11 +67,13 @@ public class PlayerMove_2D : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isGoal) return;
         if (MoveOn) Move();//移動系まとめ
     }
 
     void Update()
     {
+        if (isGoal) return;
         if (MachineRb.gravityScale < 0)
             Gravity_y = -1;
         else
@@ -279,6 +284,8 @@ public class PlayerMove_2D : MonoBehaviour
 
     private void Reset()//リセット
     {
+        isGoal = false;
+        if (GoalUI != null) GoalUI.SetActive(false);
         MachinePos.position = new Vector3(RespawnPos_First.x, RespawnPos_First.y, 0);
         RespawnPos = new Vector2(MachinePos.position.x, MachinePos.position.y);
         RespawnGravity = false;
@@ -287,6 +294,12 @@ public class PlayerMove_2D : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other)
     {
+        if (other.gameObject.CompareTag("Goal"))
+        {
+            Goal();
+            return;
+        }
+
         if (JUMP == false)
         {
             JUMP = true;
@@ -344,6 +357,24 @@ public class PlayerMove_2D : MonoBehaviour
         {
             Debug.Log("ﾀﾋ");
             hp = 0;
+        }
+        else if (other.CompareTag("Goal"))
+        {
+            Goal();
+        }
+    }
+
+    private void Goal()
+    {
+        if (isGoal) return;
+        isGoal = true;
+        MoveOn = false;
+        MachineRb.linearVelocity = Vector2.zero;
+        MachineRb.angularVelocity = 0f;
+        Debug.Log("ゴール！");
+        if (GoalUI != null)
+        {
+            GoalUI.SetActive(true);
         }
     }
 }
