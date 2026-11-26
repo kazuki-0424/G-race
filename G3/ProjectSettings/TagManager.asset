@@ -10,6 +10,7 @@ TagManager:
   - GravityGate
   - Gravity
   - Death
+  - Goal
   layers:
   - Default
   - TransparentFX
