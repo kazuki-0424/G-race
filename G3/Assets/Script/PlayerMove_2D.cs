@@ -48,11 +48,7 @@ public class PlayerMove_2D : MonoBehaviour
     [SerializeField] Slider HPGage;
     [SerializeField] Slider BoostGage;
     // 移動SEの再生管理（押しっぱなしで連続再生しないようにするフラグ）
-    private bool _isMoveSEPlaying = false;
-    // GetKeyDownをFixedUpdateで読み逃さないためのフラグ（Update側で受け取る）
-    private bool _spaceKeyDown = false;
-    private bool _qKeyDown = false;
-
+    private bool _isMoveSEPlaying = false;
     void Awake()
     {
         // VSyncをオフにする
@@ -109,10 +105,6 @@ public class PlayerMove_2D : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E))
             Reset();
-
-        // GetKeyDownはUpdateで受け取り、FixedUpdateで読み逃さないようにする
-        if (Input.GetKeyDown(KeyCode.Space)) _spaceKeyDown = true;
-        if (Input.GetKeyDown(KeyCode.Q)) _qKeyDown = true;
     }
 
     private void Move()//移動や重力系
@@ -127,12 +119,12 @@ public class PlayerMove_2D : MonoBehaviour
             else
                 Speed = SpeedMax;
             // 移動SE: 押し始めた瞬間だけ再生（押しっぱなしで連続再生しない）
-            if (!_isMoveSEPlaying)
-            {
-                AudioManager.Instance?.PlayMove();
-                _isMoveSEPlaying = true;
-            }
-        }
+            if (!_isMoveSEPlaying)
+            {
+                AudioManager.Instance?.PlayMove();
+                _isMoveSEPlaying = true;
+            }
+        }
         else if (Input.GetKey(KeyCode.A))
         {
             if (Speed > 0)
@@ -142,16 +134,16 @@ public class PlayerMove_2D : MonoBehaviour
             else
                 Speed = -SpeedMax * 0.5f;
             // 移動SE: 押し始めた瞬間だけ再生（押しっぱなしで連続再生しない）
-            if (!_isMoveSEPlaying)
-            {
-                AudioManager.Instance?.PlayMove();
-                _isMoveSEPlaying = true;
-            }
+            if (!_isMoveSEPlaying)
+            {
+                AudioManager.Instance?.PlayMove();
+                _isMoveSEPlaying = true;
+            }
         }
         else
         {
             // キーを離したらSEフラグをリセット（次に押したとき再度鳴る）
-            _isMoveSEPlaying = false;
+            _isMoveSEPlaying = false;
             
             if (Speed != 0f)
             {
@@ -171,25 +163,19 @@ public class PlayerMove_2D : MonoBehaviour
                 Boost = 0;
         }
 
-        //手動ブースト（_qKeyDown フラグで受け取る）
-        if (_qKeyDown && Boost_Gage >= Boost_Cost)
+        //手動ブースト
+        if (Input.GetKeyDown(KeyCode.Q) && Boost_Gage >= Boost_Cost)
         {
-            _qKeyDown = false;
             BOOST();
             Boost_Gage -= Boost_Cost;
             if (Boost_Gage < 0)
                 Boost_Gage = 0;
         }
-        else
-        {
-            _qKeyDown = false;
-        }
         //----ブースト----
 
-        //重力反転・ジャンプ（_spaceKeyDown フラグで受け取る）
-        if (_spaceKeyDown)
+        //重力反転・ジャンプ
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            _spaceKeyDown = false;
             if (GRAVITY_CTR)
             {
                 GRAVITY();
