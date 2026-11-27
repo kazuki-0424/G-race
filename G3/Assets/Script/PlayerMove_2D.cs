@@ -67,13 +67,12 @@ public class PlayerMove_2D : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isGoal) return;
-        if (MoveOn) Move();//移動系まとめ
     }
 
     void Update()
     {
         if (isGoal) return;
+        if (MoveOn) Move();//移動系まとめ
         if (MachineRb.gravityScale < 0)
             Gravity_y = -1;
         else
@@ -196,11 +195,11 @@ public class PlayerMove_2D : MonoBehaviour
         if (jump_move == 1)
         {
             jump_count++;
-            if (Input.GetKey(KeyCode.LeftShift))
+            if (Input.GetKey(KeyCode.Space))
             {
                 jump_y += 0.4f;
             }
-            if(Input.GetKeyUp(KeyCode.RightShift)||jump_count == 15)
+            if(Input.GetKeyUp(KeyCode.Space)||jump_count == 15)
             {
                 jump_count = 0;
                 jump_move = 2;

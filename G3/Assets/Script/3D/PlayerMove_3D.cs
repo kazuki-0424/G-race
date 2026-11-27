@@ -8,29 +8,32 @@ using UnityEngine.UI;
 [RequireComponent (typeof(Rigidbody))]
 public class PlayerMove_3D : MonoBehaviour
 {
+
+    [Header("移動系")]
+    [SerializeField] bool OnMove = true;
     [SerializeField] float speedBuf = 0.02f;
-    [SerializeField] float DriftSpeedDebuf;
     public float moveSpeed = 3f;
     public float turnSpeed = 100f;
     private Rigidbody rb;
     private Transform tf;
 
-    public float boost = 1f;
+    [Space]
+    public float boost = 0f;
     public float speed = 1f;
     public float maxspeed = 5;
 
-    //ドリフト系の変数
+    [Header("ドリフト系の変数")]
     bool isDriftingInput;
     public bool isDrifting = false;
-    public float driftGrip = 0.3f;   // 小さいほど滑る
-    public float normalGrip = 1.0f;
-    public float driftTurnMultiplier = 1.5f;
-    public float driftBoostPower = 1.2f;
+    [SerializeField] float DriftSpeedDebuf = 0;
+    [SerializeField] float DriftSpeedMax= 0;
+    [SerializeField] int DriftCount = 0;
+    [SerializeField] int DriftCount_Low = 60;
 
-    //リセット用の変数
+    [Header("リセット用の変数")]
     public Vector3 InitTrans;
 
-    //HP系の変数
+    [Header("HP系の変数")]
     public int HP = 100;
     public int MaxHP = 100;
 
@@ -43,13 +46,17 @@ public class PlayerMove_3D : MonoBehaviour
 
     private void Update()
     {
-        isDriftingInput = Input.GetKey(KeyCode.Space);
 
     }
 
     void FixedUpdate()
     {
+        if (OnMove) Move();
+    }
 
+    private void Move()
+    {
+        isDriftingInput = Input.GetKey(KeyCode.LeftShift);
         // 入力
         float turn = Input.GetAxis("Horizontal");
         isDrifting = isDriftingInput;
@@ -60,42 +67,75 @@ public class PlayerMove_3D : MonoBehaviour
 
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D))
         {
-            if (isDrifting)
+            if (speed > maxspeed * 0.4f)
             {
-                maxspeed = 1.5f;
+                if (isDrifting)
+                {
+                    DriftSpeedMax = maxspeed * 0.3f;
+                }
+                else
+                {
+                    DriftSpeedMax = maxspeed * 0.2f;
+                }
             }
-            else
-            {
-                maxspeed = 2f;
-            }
-            if (speed > maxspeed) speed = speed * 0.8f;
+            if(isDrifting)DriftCount++;
+            if (DriftSpeedDebuf < DriftSpeedMax)
+                DriftSpeedDebuf += speedBuf;
+            if (DriftSpeedDebuf > DriftSpeedMax)
+                DriftSpeedDebuf = DriftSpeedMax;
         }
-        else maxspeed = 3;
+        else
+        {
+            if (DriftCount!=0)
+            {
+                if (DriftCount > DriftCount_Low)
+                {
+                    boost = (float)DriftCount / DriftCount_Low * 2;
+                }
+                DriftCount = 0;
+            }
+            if (DriftSpeedDebuf != 0f)
+                DriftSpeedDebuf = DriftSpeedDebuf * 0.8f;
+            if (DriftSpeedDebuf < 0.001)
+                DriftSpeedDebuf = 0f;
+        }
 
-        if (speed > maxspeed - speedBuf && speed < maxspeed + speedBuf)
-            speed = maxspeed;
+        if (boost > 0f)
+        {
+            boost -= speedBuf * 10;
+            if (boost < 0.0001f)
+                boost = 0;
+        }
 
         // ===== 速度計算 =====
-        float driftBonus = isDrifting ? 1.2f : 1f;
-        float currentSpeed = moveSpeed * speed * 2 * boost * driftBonus;
-
+        float currentSpeed = moveSpeed * (speed + boost - DriftSpeedDebuf);
 
         if (Input.GetKey(KeyCode.S))
         {
-            currentSpeed = -moveSpeed * 4;
-            if (speed > 1f) speed += speedBuf;
+            if(speed>0)
+                speed = 0;
+            if (speed > -maxspeed * 0.5f) speed -= speedBuf * 0.5f;
         }
         else if(Input.GetKey(KeyCode.W))
         {
+            if(speed<0)
+                speed = 0;
             if (speed < maxspeed)
             {
                 speed += speedBuf;
             }
         }
-        else if (!Input.GetKey(KeyCode.W))
+        else
         {
-            currentSpeed = 0f;
+            
+            if (speed != 0f)
+            {
+                speed = speed * 0.95f;
+                if (speed <= speedBuf && -speedBuf * 0.5f <= speed)
+                    speed = 0f;
+            }
         }
+
 
         Vector3 forwardVel = transform.forward * currentSpeed;
 
@@ -111,16 +151,6 @@ public class PlayerMove_3D : MonoBehaviour
 
         rb.linearVelocity = newVel;
 
-
-        // ===== boost減衰 =====
-        if (boost > 1f)
-        {
-            boost -= 1.5f * Time.fixedDeltaTime;
-            if (boost < 1f) boost = 1f;
-        }
-
-        boost = Mathf.Clamp(boost, 1f, 3f);
-
         rb.angularVelocity = Vector3.zero;
         if (Input.GetKeyDown(KeyCode.R))
         {
@@ -131,6 +161,19 @@ public class PlayerMove_3D : MonoBehaviour
 
     void OnTriggerEnter(Collider collision)
     {
-
+        if (collision.tag == "Boost")
+        {
+            boost += maxspeed * 1.5f;
+        }
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "wall")
+        {
+            speed -= maxspeed * 0.5f;
+            HP -= 30;
+        }
+    }
+
 }
